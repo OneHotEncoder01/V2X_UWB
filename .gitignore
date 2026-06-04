@@ -1,2 +1,7 @@
 *.asn
 *.nmea
+*.bin
+CAM_Messag/
+__pycache__/
+*.pyc
+.DS_Store
