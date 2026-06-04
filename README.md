@@ -1,6 +1,6 @@
 # UWB CAM Communication Test Setup
 
-Follow these simple steps to test the end-to-end V2X CAM transmission over UWB.
+Testing
 
 ## 1. Flash the ESP32 Boards
 1. Connect both ESP32 UWB boards to your computer.
