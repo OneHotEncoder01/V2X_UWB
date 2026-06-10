@@ -31,8 +31,6 @@ def listen_for_uwb_cam(port='/dev/ttyUSB1'):
         print(f"[-] Serial error: {e}")
         return None
 
-template = asn1.compile_files(['CAM-PDU-Descriptions.asn', 'ETSI-ITS-CDD.asn'], 'uper')
-
 use_uwb = input("Listen for message over UWB? (y/n) [y]: ").strip().lower()
 if use_uwb == '' or use_uwb == 'y':
     port = input("RX UWB Port [/dev/ttyUSB1]: ").strip()
