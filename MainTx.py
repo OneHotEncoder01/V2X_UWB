@@ -30,11 +30,9 @@ def InitCAMConfig():
     :  """)
     TrafficParticipantType = int(input())
 
-    system_time = int(time.time() * 1000)
-    cits_ms = system_time - CITS_EPOCH_OFFSET
-    generationDeltaTime = cits_ms % 65536
+    generationDeltaTime = get_generation_delta_time()
 
-    gps = GenerateGPS.MockGPS()
+    gps = GenerateGPS.GetGPS()
 
     if gps['speed']['speedValue'] == 0:
         driveDirection = 'unavailable'
@@ -45,50 +43,84 @@ def InitCAMConfig():
 
     with open('config1.json', 'w') as f:
         json.dump(config, f)
+
+def get_generation_delta_time():
+    system_time = int(time.time() * 1000)
+    cits_ms = system_time - CITS_EPOCH_OFFSET
+    return cits_ms % 65536
     
+def GetGps(gps_queue):
+    while True:
+        gps_data = GenerateGPS.GetGPS()
+
+        if gps_queue.full():
+            gps_queue.get()
+
+        gps_queue.put(gps_data)
+
+def getCAM(
+    gps_queue,
+    msg_queue,
+    participant_type,
+    generation_delta_time
+):
+    while True:
+        gps = gps_queue.get()
+
+        generation_delta_time = get_generation_delta_time()
+
+        encoded = GenerateCAM.GenerateCamMessage(
+            generation_delta_time,
+            gps,
+            participant_type
+        )
+
+        if msg_queue.full():
+            msg_queue.get()
+
+        msg_queue.put(encoded)
+
+def sendCAM(msq_queue):
+    ser = serial.Serial("/dev/ttyUSB4", 115200)
+
+    while True:
+        msg = msg_queue.get()
+        ser.write(msg)
+
+
+if __name__ == "__main__":
+    from multiprocessing import Process, Queue
     
-def GetGps():
-    return GenerateGPS.MockGPS()
+    InitCAMConfig()
+    with open("config1.json", "r") as f:
+        config = json.load(f)
 
-def getCAM(gps):
-    if os.path.isfile("config1.json"):
-        with open('config1.json', 'r') as f:
-            config = json.load(f)
-    else:  
-        InitCAMConfig()
-      
+    participant_type = config["traffic_participant_type"]
+    generation_delta_time = config["generation_delta_time"]
 
-    encoded = GenerateCAM.GenerateCamMessage(config['generation_delta_time'], 
-                                            gps,  
-                                            config['traffic_participant_type'])
-    return encoded
+    gps_queue = Queue(maxsize=1)
+    msg_queue = Queue(maxsize=1)
 
-def sendUWB(encoded):
-    send_uwb = input("Send over UWB? (y/n) [y]: ").strip().lower()
-    if send_uwb == '' or send_uwb == 'y':
-        port = input("TX UWB Port [/dev/ttyUSB0]: ").strip()
-        if not port:
-            port = '/dev/ttyUSB0'
-        try:
-            ser = serial.Serial(port, 115200, timeout=1)
-            print("[*] Waiting for UWB board to boot...")
-            time.sleep(2)
-            payload_len = len(encoded)
-            if payload_len > 115:
-                print(f"[!] Warning: Payload size {payload_len} may exceed standard UWB MTU limits.")
-            sync_header = bytes([0xAA, 0xBB, payload_len])
-            packet = sync_header + encoded
-            ser.write(packet)
-            ser.flush()
-            print(f"[*] Dispatched {payload_len} CAM bytes to UWB Board on {port}.")
-            ser.close()
-        except Exception as e:
-            print(f"[-] Failed to send to UWB board: {e}")
-    
-    # Return hex string for display and manual testing
-    return encoded.hex()
+    gps_worker = Process(
+        target=GetGps,
+        args=(gps_queue,)
+    )
 
-InitCAMConfig()
-gps = GetGps()
-print()
-print(getCAM(gps))
+    cam_worker = Process(
+        target=getCAM,
+        args=(
+            gps_queue,
+            msg_queue,
+            participant_type,
+            generation_delta_time
+        )
+    )
+
+    tx_worker = Process(
+        target=sendCAM,
+        args=(msg_queue,)
+    )
+
+    gps_worker.start()
+    cam_worker.start()
+    tx_worker.start()

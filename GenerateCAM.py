@@ -1,8 +1,5 @@
 import asn1tools as asn1
 
-
-
-
 def GenerateCamMessage(generation_delta_time,
                        gps,
                        traffic_participant_type = 2,
