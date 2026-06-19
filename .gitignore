@@ -1,8 +1,11 @@
-*.asn
-*.nmea
-*.bin
-CAM_Messag/
 __pycache__/
-*.pyc
+*.py[cod]
 .DS_Store
-*.json
+venv/
+CAM_Messag/
+*.asn
+*.bin
+*.nmea
+cam_messages.sqlite3
+db.sqlite3
+config1.json

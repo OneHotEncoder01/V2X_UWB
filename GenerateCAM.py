@@ -1,4 +1,10 @@
 import asn1tools as asn1
+from functools import lru_cache
+
+
+@lru_cache(maxsize=None)
+def _compile_standards(ETSI, CAM, MSG_Type):
+    return asn1.compile_files([ETSI, CAM], MSG_Type)
 
 def GenerateCamMessage(generation_delta_time,
                        gps,
@@ -7,7 +13,8 @@ def GenerateCamMessage(generation_delta_time,
                        CAM = 'CAM-PDU-Descriptions.asn', 
                        MSG_Type = 'uper'):
 
-    standards = asn1.compile_files([ETSI, CAM], MSG_Type)
+    standards = _compile_standards(ETSI, CAM, MSG_Type)
+    generation_delta_time = int(generation_delta_time) % 65536
 
     if gps['speed']['speedValue'] == 0:
         drive_direction = 'unavailable'

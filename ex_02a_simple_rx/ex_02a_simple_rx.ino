@@ -100,7 +100,7 @@ void loop()
             dwt_read32bitreg(RX_FINFO_ID) &
             RX_FINFO_RXFLEN_BIT_MASK;
 
-        if (frame_len <= FRAME_LEN_MAX)
+        if (frame_len > FCS_LEN && frame_len <= FRAME_LEN_MAX)
         {
             dwt_readrxdata(
                 rx_buffer,
@@ -109,7 +109,11 @@ void loop()
 
             for (int i = 0; i < frame_len - FCS_LEN; i++)
             {
-                Serial.write(rx_buffer[i]);
+                if (rx_buffer[i] < 0x10)
+                {
+                    Serial.print('0');
+                }
+                Serial.print(rx_buffer[i], HEX);
             }
 
             Serial.println();

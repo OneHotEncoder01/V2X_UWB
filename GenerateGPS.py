@@ -12,6 +12,17 @@ NMEA_FILE = Path(__file__).with_name("output.nmea")
 ITS_EPOCH = datetime(2004, 1, 1, tzinfo=timezone.utc)
 KNOT_TO_MPS = 0.5144444444444445
 
+LATITUDE_UNAVAILABLE = 900_000_001
+LONGITUDE_UNAVAILABLE = 1_800_000_001
+SPEED_OUT_OF_RANGE = 16_382
+SPEED_UNAVAILABLE = 16_383
+HEADING_UNAVAILABLE = 3_601
+ALTITUDE_NEGATIVE_OUT_OF_RANGE = -100_000
+ALTITUDE_POSITIVE_OUT_OF_RANGE = 800_000
+ALTITUDE_UNAVAILABLE = 800_001
+POSITION_CONFIDENCE_OUT_OF_RANGE = 4_094
+POSITION_CONFIDENCE_UNAVAILABLE = 4_095
+
 _mock_locations = None
 _mock_index = 0
 
@@ -23,6 +34,67 @@ def _float(value):
 def _its_timestamp(datestamp, timestamp):
     gps_time = datetime.combine(datestamp, timestamp, tzinfo=timezone.utc)
     return int((gps_time - ITS_EPOCH).total_seconds() * 1000)
+
+
+def _latitude(value):
+    if value is None:
+        return LATITUDE_UNAVAILABLE
+
+    encoded = int(round(value * 10_000_000))
+    if encoded < -900_000_000 or encoded > 900_000_000:
+        return LATITUDE_UNAVAILABLE
+    return encoded
+
+
+def _longitude(value):
+    if value is None:
+        return LONGITUDE_UNAVAILABLE
+
+    encoded = int(round(value * 10_000_000))
+    if encoded <= -1_800_000_000 or encoded > 1_800_000_000:
+        return LONGITUDE_UNAVAILABLE
+    return encoded
+
+
+def _heading_value(heading_deg):
+    if heading_deg is None:
+        return HEADING_UNAVAILABLE
+
+    return int(round((heading_deg % 360.0) * 10)) % 3600
+
+
+def _speed_value(speed_mps):
+    if speed_mps is None:
+        return SPEED_UNAVAILABLE
+
+    encoded = int(round(speed_mps * 100))
+    if encoded < 0:
+        return SPEED_UNAVAILABLE
+    if encoded >= SPEED_OUT_OF_RANGE:
+        return SPEED_OUT_OF_RANGE
+    return encoded
+
+
+def _altitude_value(altitude_m):
+    if altitude_m is None:
+        return ALTITUDE_UNAVAILABLE
+
+    encoded = int(round(altitude_m * 100))
+    if encoded <= ALTITUDE_NEGATIVE_OUT_OF_RANGE:
+        return ALTITUDE_NEGATIVE_OUT_OF_RANGE
+    if encoded >= ALTITUDE_POSITIVE_OUT_OF_RANGE:
+        return ALTITUDE_POSITIVE_OUT_OF_RANGE
+    return encoded
+
+
+def _position_confidence(hdop):
+    if hdop is None:
+        return POSITION_CONFIDENCE_UNAVAILABLE
+
+    encoded = int(round(hdop * 100))
+    if encoded >= POSITION_CONFIDENCE_OUT_OF_RANGE:
+        return POSITION_CONFIDENCE_OUT_OF_RANGE
+    return max(1, encoded)
 
 
 def _altitude_confidence(hdop):
@@ -49,15 +121,15 @@ def _cam_from_fix(rmc, gga=None):
     altitude_m = _float(getattr(gga, "altitude", None)) if gga else None
     hdop = _float(getattr(gga, "horizontal_dil", None)) if gga else None
 
-    heading_value = int(round(heading_deg * 10)) if heading_deg is not None else 3601
-    speed_value = int(round(speed_mps * 100)) if speed_mps is not None else 16383
-    altitude_value = int(round(altitude_m * 100)) if altitude_m is not None else 0
-    position_confidence = max(1, int(round(hdop * 100))) if hdop is not None else 4095
+    heading_value = _heading_value(heading_deg)
+    speed_value = _speed_value(speed_mps)
+    altitude_value = _altitude_value(altitude_m)
+    position_confidence = _position_confidence(hdop)
 
     return {
         "timestampIts": _its_timestamp(rmc.datestamp, rmc.timestamp),
-        "latitude": int(round(rmc.latitude * 10_000_000)),
-        "longitude": int(round(rmc.longitude * 10_000_000)),
+        "latitude": _latitude(rmc.latitude),
+        "longitude": _longitude(rmc.longitude),
         "heading": {
             "headingValue": heading_value,
             "headingConfidence": 127,

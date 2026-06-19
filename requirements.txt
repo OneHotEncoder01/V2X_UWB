@@ -1,0 +1,4 @@
+asn1tools
+django
+pynmea2
+pyserial

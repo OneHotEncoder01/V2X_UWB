@@ -43,6 +43,17 @@ uint16_t tx_len = 0;
 
 extern dwt_txconfig_t txconfig_options;
 
+int hexValue(char c)
+{
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  if (c >= 'a' && c <= 'f')
+    return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F')
+    return c - 'A' + 10;
+  return -1;
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -104,11 +115,36 @@ void loop()
         return;
     }
 
-    String msg = Serial.readStringUntil('\n');
+    String hex_msg = Serial.readStringUntil('\n');
+    hex_msg.trim();
 
-    tx_len = min((int)msg.length(), MAX_PAYLOAD);
+    if ((hex_msg.length() % 2) != 0)
+    {
+        Serial.println("ERR: odd hex length");
+        return;
+    }
 
-    memcpy(tx_msg, msg.c_str(), tx_len);
+    if ((hex_msg.length() / 2) > MAX_PAYLOAD)
+    {
+        Serial.println("ERR: payload too long");
+        return;
+    }
+
+    tx_len = hex_msg.length() / 2;
+
+    for (uint16_t i = 0; i < tx_len; i++)
+    {
+        int high = hexValue(hex_msg.charAt(i * 2));
+        int low = hexValue(hex_msg.charAt(i * 2 + 1));
+
+        if (high < 0 || low < 0)
+        {
+            Serial.println("ERR: invalid hex");
+            return;
+        }
+
+        tx_msg[i] = (high << 4) | low;
+    }
 
     dwt_writetxdata(tx_len, tx_msg, 0);
     dwt_writetxfctrl(tx_len + FCS_LEN, 0, 0);
@@ -124,6 +160,6 @@ void loop()
         SYS_STATUS_ID,
         SYS_STATUS_TXFRS_BIT_MASK);
 
-    Serial.print("TX: ");
-    Serial.println(msg);
+    Serial.print("TX ");
+    Serial.println(tx_len);
 }
