@@ -3,6 +3,7 @@ from django.db import models
 
 class CamMessage(models.Model):
     received_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    station_id = models.BigIntegerField(null=True, blank=True, db_index=True)
     generation_delta_time = models.PositiveIntegerField()
     station_type = models.PositiveIntegerField(null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)

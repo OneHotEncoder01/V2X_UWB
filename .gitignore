@@ -2,10 +2,50 @@ __pycache__/
 *.py[cod]
 .DS_Store
 venv/
-CAM_Messag/
+.venv/
+env/
+ENV/
+
+# ETSI ASN.1 schema files (copyright — download separately from ETSI Forge)
 *.asn
+
+# Runtime / generated files
 *.bin
 *.nmea
 cam_messages.sqlite3
 db.sqlite3
 config1.json
+static/tile_cache/
+
+# Generated figures (produced by figures/generate_figures.py)
+figures/*.pdf
+figures/*.png
+
+# Generated experiment outputs
+stress_test_*.csv
+stress_test_*.log
+stress_test_*.png
+over_air_runs/
+over_air_*.csv
+field_distance_rx_*.csv
+field_distance_tx_*.csv
+field_distance_summary_*.csv
+
+# Documentation files
+*.md
+!README.md
+!TECHNICAL.md
+!STRESSTEST_QUICKSTART.md
+!OVER_AIR_LOSS_TEST.md
+
+# Windows / editor / local runtime files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.log
+.env
+.env.*
+.idea/
+.vscode/

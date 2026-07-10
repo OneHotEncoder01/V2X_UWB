@@ -5,10 +5,15 @@ import socket
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 
-def run_command(args):
-    subprocess.run(args, check=True)
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_RX_PORT = "COM3" if os.name == "nt" else "/dev/ttyUSB0"
+
+
+def run_command(args, env=None):
+    subprocess.run(args, check=True, cwd=BASE_DIR, env=env)
 
 
 def web_port_available(host, port):
@@ -26,7 +31,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Receive CAM messages and show them on the Django dashboard."
     )
-    parser.add_argument("--port", default="/dev/ttyUSB0", help="RX board serial port")
+    parser.add_argument("--port", default=DEFAULT_RX_PORT, help="RX board serial port")
     parser.add_argument("--baud", type=int, default=115200, help="RX board baud rate")
     parser.add_argument(
         "--encoding",
@@ -45,10 +50,11 @@ def main():
     args = parser.parse_args()
 
     python = sys.executable
+    manage_py = str(BASE_DIR / "manage.py")
     env = os.environ.copy()
     env.setdefault("DJANGO_SETTINGS_MODULE", "cam_dashboard.settings")
 
-    run_command([python, "manage.py", "migrate", "--noinput"])
+    run_command([python, manage_py, "migrate", "--noinput"], env=env)
 
     if not web_port_available(args.host, args.web_port):
         print(
@@ -63,7 +69,7 @@ def main():
     if not args.no_receiver:
         receiver_command = [
             python,
-            "manage.py",
+            manage_py,
             "receive_cam",
             "--port",
             args.port,
@@ -75,16 +81,16 @@ def main():
         if args.raw:
             receiver_command.append("--raw")
 
-        receiver = subprocess.Popen(receiver_command, env=env)
+        receiver = subprocess.Popen(receiver_command, cwd=BASE_DIR, env=env)
 
     server_command = [
         python,
-        "manage.py",
+        manage_py,
         "runserver",
         "--noreload",
         f"{args.host}:{args.web_port}",
     ]
-    server = subprocess.Popen(server_command, env=env)
+    server = subprocess.Popen(server_command, cwd=BASE_DIR, env=env)
 
     print(f"Dashboard: http://{args.host}:{args.web_port}/", flush=True)
     if receiver is not None:
@@ -96,7 +102,8 @@ def main():
                 process.terminate()
 
     signal.signal(signal.SIGINT, stop_processes)
-    signal.signal(signal.SIGTERM, stop_processes)
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, stop_processes)
 
     try:
         while True:

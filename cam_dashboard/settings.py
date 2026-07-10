@@ -1,9 +1,10 @@
+import os
 from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "local-cam-dashboard-dev-key"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "local-cam-dashboard-dev-key")
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 

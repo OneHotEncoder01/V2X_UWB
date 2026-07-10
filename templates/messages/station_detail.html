@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ station_type_label }} — CAM Dashboard</title>
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f8;
+      --panel: #ffffff;
+      --ink: #182026;
+      --muted: #5f6f7a;
+      --line: #dce3e8;
+      --accent: #0f766e;
+      --warn: #b45309;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    /* ── top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 24px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      white-space: nowrap;
+      transition: border-color 0.15s;
+    }
+
+    .back-btn:hover { border-color: var(--accent); }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .station-tag {
+      font-size: 12px;
+      color: var(--muted);
+      background: #e8edf0;
+      border-radius: 4px;
+      padding: 3px 8px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--warn);
+      flex-shrink: 0;
+      transition: background 0.3s;
+      margin-left: auto;
+    }
+
+    .dot.live  { background: var(--accent); animation: pulse 2s ease-in-out infinite; }
+    .dot.stale { background: var(--warn); animation: none; }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0   rgba(15,118,110,0.5); }
+      50%      { box-shadow: 0 0 0 5px rgba(15,118,110,0);   }
+    }
+
+    .status-label {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── body layout ── */
+    .body {
+      display: grid;
+      grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+      min-height: calc(100vh - 57px);
+    }
+
+    /* ── sidebar ── */
+    aside {
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 18px 0 10px;
+    }
+
+    .section-title:first-child { margin-top: 0; }
+
+    /* ── metrics grid ── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #fbfcfd;
+    }
+
+    .label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .value {
+      margin-top: 6px;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .value small {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-left: 3px;
+    }
+
+    .badge-dir {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+      vertical-align: 2px;
+    }
+
+    /* ── history table ── */
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 8px 9px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 700;
+      background: #f8fafb;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    .latest-row { background: #ecfdf5; }
+
+    /* ── map ── */
+    .map-panel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 420px;
+      background: #edf3f5;
+    }
+
+    #map { width: 100%; height: 100%; display: block; }
+
+    .map-note {
+      position: absolute;
+      left: 14px; bottom: 14px;
+      max-width: min(420px, calc(100% - 28px));
+      color: var(--muted);
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 500;
+    }
+
+    .map-controls {
+      position: absolute;
+      top: 14px; right: 14px;
+      display: flex;
+      gap: 6px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px;
+      box-shadow: 0 6px 20px rgba(24,32,38,0.12);
+      z-index: 500;
+    }
+
+    button {
+      width: 34px; height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    button:hover { border-color: var(--accent); }
+
+    .cam-marker {
+      display: grid;
+      place-items: center;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      background: #334155;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.28);
+    }
+
+    .cam-path { stroke: var(--accent); stroke-width: 3; stroke-opacity: 0.65; }
+
+    @media (max-width: 900px) {
+      .body { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="/">&#8592; Dashboard</a>
+  <h1 class="page-title">{{ station_type_label }}</h1>
+  <span class="station-tag">{{ station_id|default:"ID unknown" }}</span>
+  <span class="dot" id="dot"></span>
+  <span class="status-label" id="status-text">Loading…</span>
+</div>
+
+<div class="body">
+  <aside>
+    <p class="section-title">Latest reading</p>
+    <div class="metrics">
+      <div class="metric">
+        <div class="label">Speed</div>
+        <div class="value" id="speed">-</div>
+      </div>
+      <div class="metric">
+        <div class="label">Heading</div>
+        <div class="value" id="heading">-</div>
+      </div>
+      <div class="metric">
+        <div class="label">Altitude</div>
+        <div class="value" id="altitude">-</div>
+      </div>
+      <div class="metric">
+        <div class="label">Direction</div>
+        <div class="value" id="direction">-</div>
+      </div>
+      <div class="metric">
+        <div class="label">Latitude</div>
+        <div class="value" id="latitude">-</div>
+      </div>
+      <div class="metric">
+        <div class="label">Longitude</div>
+        <div class="value" id="longitude">-</div>
+      </div>
+    </div>
+
+    <p class="section-title">Message history</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Time</th>
+            <th>Speed</th>
+            <th>Hdg</th>
+            <th>Lat, Lon</th>
+          </tr>
+        </thead>
+        <tbody id="history"></tbody>
+      </table>
+    </div>
+  </aside>
+
+  <div class="map-panel">
+    <div id="map" role="img" aria-label="Station position map"></div>
+    <div class="map-controls">
+      <button id="zoom-in"  type="button" title="Zoom in">+</button>
+      <button id="zoom-out" type="button" title="Zoom out">−</button>
+      <button id="fit"      type="button" title="Fit path">F</button>
+    </div>
+    <div class="map-note" id="map-note">Waiting for position data.</div>
+  </div>
+</div>
+
+<script src="/static/vendor/leaflet/leaflet.js?v=2"></script>
+<script>
+  const STATION_KEY = "{{ station_key }}";
+
+  /* ── map ── */
+  const map = L.map("map", { zoomControl: false, preferCanvas: true })
+               .setView([48.835, 10.1035], 16);
+  L.tileLayer("/tiles/{z}/{x}/{y}.png", {
+    maxZoom: 20,
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+  }).addTo(map);
+
+  const markerLayer = L.layerGroup().addTo(map);
+  let pathLayer = null;
+  let userAdjustedMap = false;
+  let lastMessages = [];
+  let staleTimer = null;
+
+  map.on("zoomstart dragstart", () => { userAdjustedMap = true; });
+
+  /* ── helpers ── */
+  function fmt(v, digits = 1, suffix = "") {
+    return (v === null || v === undefined) ? "-" : `${Number(v).toFixed(digits)}${suffix}`;
+  }
+
+  function compassPoint(deg) {
+    if (deg === null || deg === undefined) return "";
+    return ["N","NE","E","SE","S","SW","W","NW"][Math.round(deg / 45) % 8];
+  }
+
+  function latestMarkerHtml(heading) {
+    const rotate = (heading !== null && heading !== undefined) ? heading : 0;
+    return `<div style="width:38px;height:38px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.32))">
+      <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="-19 -19 38 38"
+           style="transform:rotate(${rotate}deg);display:block">
+        <circle r="16" fill="#0f766e" stroke="white" stroke-width="3"/>
+        <polygon points="0,-11 6,5 0,1 -6,5" fill="white"/>
+      </svg></div>`;
+  }
+
+  /* ── update metrics ── */
+  function setLatest(m) {
+    const dot = document.getElementById("dot");
+
+    if (!m) {
+      dot.className = "dot";
+      document.getElementById("status-text").textContent = "No messages";
+      return;
+    }
+
+    dot.className = "dot live";
+    document.getElementById("status-text").textContent =
+      "Last seen " + new Date(m.received_at).toLocaleTimeString();
+
+    clearTimeout(staleTimer);
+    staleTimer = setTimeout(() => {
+      dot.className = "dot stale";
+      document.getElementById("status-text").textContent = "No new messages (stale)";
+    }, 5000);
+
+    document.getElementById("speed").innerHTML =
+      m.speed_kmh !== null ? `${fmt(m.speed_kmh,1)}<small>km/h</small>` : "-";
+
+    const hdg = m.heading_deg;
+    document.getElementById("heading").innerHTML =
+      hdg !== null
+        ? `${fmt(hdg,1)}<small>°</small> <span style="color:var(--muted);font-size:13px;font-weight:500">${compassPoint(hdg)}</span>`
+        : "-";
+
+    document.getElementById("altitude").innerHTML =
+      m.altitude_m !== null ? `${fmt(m.altitude_m,1)}<small>m</small>` : "-";
+
+    document.getElementById("direction").innerHTML =
+      m.drive_direction
+        ? `<span class="badge-dir">${m.drive_direction}</span>`
+        : "-";
+
+    document.getElementById("latitude").innerHTML =
+      m.latitude !== null ? `${m.latitude.toFixed(6)}<small>°</small>` : "-";
+    document.getElementById("longitude").innerHTML =
+      m.longitude !== null ? `${m.longitude.toFixed(6)}<small>°</small>` : "-";
+  }
+
+  /* ── history table ── */
+  function renderHistory(messages) {
+    const tbody = document.getElementById("history");
+    tbody.innerHTML = "";
+    const latestId = messages[0]?.id;
+
+    for (const m of messages) {
+      const row = document.createElement("tr");
+      if (m.id === latestId) row.classList.add("latest-row");
+      const pos = (m.latitude !== null && m.longitude !== null)
+        ? `${m.latitude.toFixed(5)}, ${m.longitude.toFixed(5)}`
+        : "-";
+      row.innerHTML = `
+        <td>${m.id}</td>
+        <td>${new Date(m.received_at).toLocaleTimeString()}</td>
+        <td>${fmt(m.speed_kmh,1," km/h")}</td>
+        <td>${m.heading_deg !== null ? fmt(m.heading_deg,1,"°") : "-"}</td>
+        <td style="font-size:11px">${pos}</td>
+      `;
+      tbody.appendChild(row);
+    }
+  }
+
+  /* ── map ── */
+  function renderMap(messages) {
+    lastMessages = messages;
+    const pts = messages
+      .filter(m => m.latitude !== null && m.longitude !== null)
+      .map(m => ({ ...m, ll: [m.latitude, m.longitude] }));
+
+    markerLayer.clearLayers();
+    if (pathLayer) { map.removeLayer(pathLayer); pathLayer = null; }
+
+    const note = document.getElementById("map-note");
+    if (!pts.length) { note.textContent = "No position data for this station."; return; }
+
+    const chrono = pts.slice().reverse();
+    const latestId = messages[0]?.id;
+
+    if (chrono.length > 1) {
+      pathLayer = L.polyline(chrono.map(p => p.ll), { className: "cam-path" }).addTo(map);
+    }
+
+    for (const p of chrono) {
+      const isLatest = p.id === latestId;
+      const icon = isLatest
+        ? L.divIcon({ html: latestMarkerHtml(p.heading_deg), className: "", iconSize: [38,38], iconAnchor: [19,19] })
+        : L.divIcon({ html: `<div class="cam-marker">${p.id}</div>`, className: "", iconSize: [22,22], iconAnchor: [11,11] });
+
+      L.marker(p.ll, { icon, zIndexOffset: isLatest ? 1000 : 0 })
+       .bindPopup(`
+         <strong>${isLatest ? "Latest" : "CAM #" + p.id}</strong><br>
+         ${p.latitude.toFixed(7)}, ${p.longitude.toFixed(7)}<br>
+         Speed: ${fmt(p.speed_kmh,1," km/h")}<br>
+         Heading: ${p.heading_deg !== null ? fmt(p.heading_deg,1,"°") + " " + compassPoint(p.heading_deg) : "—"}<br>
+         Alt: ${fmt(p.altitude_m,1," m")}<br>
+         ${new Date(p.received_at).toLocaleTimeString()}
+       `)
+       .addTo(markerLayer);
+    }
+
+    const latest = pts.find(p => p.id === latestId) || pts[0];
+    note.textContent = `${pts.length} position${pts.length !== 1 ? "s" : ""} · ${latest.latitude.toFixed(6)}, ${latest.longitude.toFixed(6)}`;
+
+    if (!userAdjustedMap) {
+      const bounds = L.latLngBounds(pts.map(p => p.ll));
+      if (bounds.isValid()) map.fitBounds(bounds.pad(0.18), { maxZoom: 18 });
+    }
+  }
+
+  /* ── polling ── */
+  async function refresh() {
+    try {
+      const data = await fetch(`/api/messages/?station=${STATION_KEY}&limit=50`).then(r => r.json());
+      const messages = data.messages || [];
+      setLatest(messages[0] || null);
+      renderHistory(messages);
+      renderMap(messages);
+    } catch (_) {}
+  }
+
+  refresh();
+  setInterval(refresh, 2000);
+
+  document.getElementById("zoom-in") .addEventListener("click", () => { userAdjustedMap = true; map.zoomIn(); });
+  document.getElementById("zoom-out").addEventListener("click", () => { userAdjustedMap = true; map.zoomOut(); });
+  document.getElementById("fit")     .addEventListener("click", () => { userAdjustedMap = false; renderMap(lastMessages); });
+  window.addEventListener("resize", () => { map.invalidateSize(); renderMap(lastMessages); });
+</script>
+</body>
+</html>

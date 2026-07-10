@@ -1,5 +1,9 @@
+from pathlib import Path
+
 import asn1tools
 
+
+_ASN_DIR = Path(__file__).resolve().parent.parent
 
 LATITUDE_UNAVAILABLE = 900_000_001
 LONGITUDE_UNAVAILABLE = 1_800_000_001
@@ -10,21 +14,30 @@ HEADING_UNAVAILABLE = 3_601
 
 def compile_cam_template():
     return asn1tools.compile_files(
-        ["CAM-PDU-Descriptions.asn", "ETSI-ITS-CDD.asn"],
+        [
+            str(_ASN_DIR / "CAM-PDU-Descriptions.asn"),
+            str(_ASN_DIR / "ETSI-ITS-CDD.asn"),
+        ],
         "uper",
     )
 
 
 def decode_cam_payload(template, payload):
+    """Returns (decoded_cam, asn_type, station_id).
+    station_id is extracted from the ITS PDU header when the full CAM wrapper
+    is present; None when only the CoopAwareness payload is available."""
     try:
-        return template.decode("CoopAwareness", payload), "CoopAwareness"
+        decoded = template.decode("CoopAwareness", payload)
+        return decoded, "CoopAwareness", None
     except asn1tools.DecodeError as coop_error:
         try:
             wrapped = template.decode("CAM", payload)
         except asn1tools.DecodeError:
             raise coop_error
 
-        return wrapped["cam"], "CAM"
+        hdr = wrapped.get("header", {})
+        station_id = hdr.get("stationId") or hdr.get("stationID")
+        return wrapped["cam"], "CAM", station_id
 
 
 def looks_like_hex(line):
@@ -76,12 +89,12 @@ def decode_serial_line(template, line, encoding="auto"):
 
     for payload, payload_encoding in payload_candidates(line, encoding):
         try:
-            decoded, asn_type = decode_cam_payload(template, payload)
+            decoded, asn_type, station_id = decode_cam_payload(template, payload)
         except asn1tools.DecodeError as exc:
             errors.append(f"{payload_encoding}: {exc}")
             continue
 
-        return payload, decoded, payload_encoding, asn_type
+        return payload, decoded, payload_encoding, asn_type, station_id
 
     if errors:
         raise asn1tools.DecodeError("; ".join(errors))
@@ -113,13 +126,14 @@ def _heading(value):
     return value / 10
 
 
-def flatten_cam(decoded):
+def flatten_cam(decoded, station_id=None):
     params = decoded["camParameters"]
     basic = params["basicContainer"]
     ref = basic["referencePosition"]
     container_name, high_frequency = params["highFrequencyContainer"]
 
     return {
+        "station_id": station_id,
         "generation_delta_time": decoded["generationDeltaTime"],
         "station_type": basic.get("stationType"),
         "latitude": _scaled_coordinate(ref.get("latitude"), LATITUDE_UNAVAILABLE),

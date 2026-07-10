@@ -17,9 +17,7 @@
       --warn: #b45309;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -41,6 +39,17 @@
       overflow: auto;
     }
 
+    .aside-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    h1 { margin: 0; font-size: 22px; line-height: 1.2; }
+
+    .station-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
     main {
       display: grid;
       grid-template-rows: auto minmax(360px, 1fr);
@@ -53,15 +62,9 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 16px 20px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.92);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      line-height: 1.2;
+      background: rgba(255,255,255,0.92);
     }
 
     .status {
@@ -74,99 +77,120 @@
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 10px; height: 10px;
       border-radius: 50%;
       background: var(--warn);
+      flex-shrink: 0;
+      transition: background 0.3s;
     }
 
-    .dot.live {
-      background: var(--accent);
+    .dot.live  { background: var(--accent); animation: pulse 2s ease-in-out infinite; }
+    .dot.stale { background: var(--warn);   animation: none; }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0   rgba(15,118,110,0.5); }
+      50%      { box-shadow: 0 0 0 5px rgba(15,118,110,0);   }
     }
 
-    .metrics {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* ── Station cards ── */
+    .station-list {
+      display: flex;
+      flex-direction: column;
       gap: 10px;
-      margin: 18px 0;
+      margin-top: 16px;
     }
 
-    .metric {
+    .station-card {
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 12px;
+      border-radius: 10px;
+      padding: 14px;
       background: #fbfcfd;
-      min-height: 76px;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      cursor: pointer;
     }
 
-    .label {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0;
+    .station-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 12px rgba(15,118,110,0.10);
     }
 
-    .value {
-      margin-top: 8px;
-      font-size: 21px;
-      font-weight: 700;
-      overflow-wrap: anywhere;
-    }
-
-    .table-wrap {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      overflow: hidden;
-      background: var(--panel);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    th,
-    td {
-      padding: 9px 10px;
-      text-align: left;
-      border-bottom: 1px solid var(--line);
-      vertical-align: top;
-    }
-
-    th {
-      color: var(--muted);
-      font-weight: 700;
-      background: #f8fafb;
-    }
-
-    tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .latest-row {
-      background: #ecfdf5;
-    }
-
-    .badge {
-      display: inline-flex;
+    .station-card-header {
+      display: flex;
       align-items: center;
-      justify-content: center;
-      min-width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      background: #e2e8f0;
-      color: var(--ink);
-      font-size: 12px;
-      font-weight: 800;
-      margin-right: 7px;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
-    .badge.latest {
+    .station-name {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .station-id-tag {
+      font-size: 11px;
+      color: var(--muted);
+      background: #e8edf0;
+      border-radius: 4px;
+      padding: 2px 7px;
+      white-space: nowrap;
+    }
+
+    .station-badge {
+      font-size: 11px;
+      color: #fff;
       background: var(--accent);
-      color: #ffffff;
+      border-radius: 4px;
+      padding: 2px 7px;
+      white-space: nowrap;
     }
 
+    .station-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .sm-item { }
+
+    .sm-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .sm-value {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .station-footer {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .arrow-link {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 10px 0 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Map ── */
     .map-panel {
       position: relative;
       width: 100%;
@@ -176,351 +200,312 @@
       background: #edf3f5;
     }
 
-    #map {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+    #map { width: 100%; height: 100%; display: block; }
 
     .map-controls {
       position: absolute;
-      top: 14px;
-      right: 14px;
+      top: 14px; right: 14px;
       display: flex;
       gap: 6px;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255,255,255,0.92);
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 6px;
-      box-shadow: 0 6px 20px rgba(24, 32, 38, 0.12);
+      box-shadow: 0 6px 20px rgba(24,32,38,0.12);
+      z-index: 500;
     }
 
     button {
-      width: 34px;
-      height: 34px;
+      width: 34px; height: 34px;
       border: 1px solid var(--line);
       border-radius: 6px;
       background: var(--panel);
       color: var(--ink);
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       cursor: pointer;
+      transition: border-color 0.15s;
     }
 
-    button:hover {
-      border-color: var(--accent);
-    }
+    button:hover { border-color: var(--accent); }
 
     .map-note {
       position: absolute;
-      left: 14px;
-      bottom: 14px;
+      left: 14px; bottom: 14px;
       max-width: min(420px, calc(100% - 28px));
       color: var(--muted);
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255,255,255,0.92);
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 13px;
-      line-height: 1.35;
+      padding: 7px 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 500;
     }
 
     .map-legend {
       position: absolute;
-      left: 14px;
-      top: 14px;
+      left: 14px; top: 14px;
       display: flex;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
       color: var(--muted);
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255,255,255,0.92);
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 13px;
+      padding: 7px 10px;
+      font-size: 12px;
+      z-index: 500;
     }
 
     .legend-dot {
-      width: 12px;
-      height: 12px;
+      width: 11px; height: 11px;
       border-radius: 50%;
       display: inline-block;
       margin-right: 4px;
       vertical-align: -1px;
     }
 
-    .legend-dot.latest {
-      background: var(--accent);
-    }
-
-    .legend-dot.history {
-      background: #334155;
-    }
+    .legend-dot.latest  { background: var(--accent); }
+    .legend-dot.history { background: #334155; }
 
     .cam-marker {
       display: grid;
       place-items: center;
-      width: 24px;
-      height: 24px;
+      width: 22px; height: 22px;
       border-radius: 50%;
-      border: 2px solid #ffffff;
+      border: 2px solid #fff;
       background: #334155;
-      color: #ffffff;
-      font-size: 10px;
+      color: #fff;
+      font-size: 9px;
       font-weight: 800;
-      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.32);
+      box-shadow: 0 2px 8px rgba(15,23,42,0.28);
     }
 
-    .cam-marker.latest {
-      width: 34px;
-      height: 34px;
-      border-width: 4px;
-      background: var(--accent);
-      font-size: 13px;
-    }
-
-    .cam-path {
-      stroke: var(--accent);
-      stroke-width: 3;
-      stroke-opacity: 0.75;
-    }
-
-    .empty {
-      color: var(--muted);
-      padding: 18px 0;
-      line-height: 1.5;
-    }
+    .cam-path { stroke: var(--accent); stroke-width: 3; stroke-opacity: 0.65; }
 
     @media (max-width: 900px) {
-      .shell {
-        grid-template-columns: 1fr;
-      }
-
-      aside {
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
-      }
-
-      main {
-        min-height: 520px;
-      }
+      .shell { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      main  { min-height: 520px; }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <aside>
+<div class="shell">
+  <aside>
+    <div class="aside-title">
       <h1>CAM Dashboard</h1>
-      <div class="empty" id="empty">Waiting for decoded CAM messages.</div>
-      <section class="metrics" aria-live="polite">
-        <div class="metric">
-          <div class="label">Delta Time</div>
-          <div class="value" id="delta">-</div>
-        </div>
-        <div class="metric">
-          <div class="label">Speed</div>
-          <div class="value" id="speed">-</div>
-        </div>
-        <div class="metric">
-          <div class="label">Heading</div>
-          <div class="value" id="heading">-</div>
-        </div>
-        <div class="metric">
-          <div class="label">Station</div>
-          <div class="value" id="station">-</div>
-        </div>
-      </section>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Position</th>
-              <th>Speed</th>
-            </tr>
-          </thead>
-          <tbody id="messages"></tbody>
-        </table>
+      <span class="station-count" id="station-count"></span>
+    </div>
+    <div class="empty" id="empty">Waiting for decoded CAM messages.</div>
+    <div class="station-list" id="station-list"></div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="status">
+        <span class="dot" id="dot"></span>
+        <span id="status-text">No messages yet</span>
       </div>
-    </aside>
-    <main>
-      <div class="topbar">
-        <div class="status"><span class="dot" id="dot"></span><span id="status">No messages yet</span></div>
-        <div class="status" id="updated">-</div>
+      <div class="status" id="updated">-</div>
+    </div>
+    <div class="map-panel">
+      <div id="map" role="img" aria-label="CAM position map"></div>
+      <div class="map-legend">
+        <span><span class="legend-dot latest"></span>latest</span>
+        <span><span class="legend-dot history"></span>history</span>
       </div>
-      <div class="map-panel">
-        <div id="map" role="img" aria-label="CAM position map"></div>
-        <div class="map-legend">
-          <span><span class="legend-dot latest"></span>latest</span>
-          <span><span class="legend-dot history"></span>history</span>
-        </div>
-        <div class="map-controls" aria-label="Map controls">
-          <button id="zoom-in" type="button" title="Zoom in">+</button>
-          <button id="zoom-out" type="button" title="Zoom out">-</button>
-          <button id="fit" type="button" title="Fit messages">F</button>
-        </div>
-        <div class="map-note" id="map-note">Waiting for messages with valid latitude and longitude.</div>
+      <div class="map-controls" aria-label="Map controls">
+        <button id="zoom-in"  type="button" title="Zoom in">+</button>
+        <button id="zoom-out" type="button" title="Zoom out">−</button>
+        <button id="fit"      type="button" title="Fit all markers">F</button>
       </div>
-    </main>
-  </div>
+      <div class="map-note" id="map-note">Waiting for messages with valid coordinates.</div>
+    </div>
+  </main>
+</div>
 
-  <script src="/static/vendor/leaflet/leaflet.js?v=2"></script>
-  <script>
-    const map = L.map("map", {
-      zoomControl: false,
-      preferCanvas: true
-    }).setView([48.835, 10.1035], 16);
-    L.control.zoom({ position: "bottomright" }).addTo(map);
-    L.tileLayer("/tiles/{z}/{x}/{y}.png", {
-      maxZoom: 20,
-      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
-    }).addTo(map);
+<script src="/static/vendor/leaflet/leaflet.js?v=2"></script>
+<script>
+  /* ── map ── */
+  const map = L.map("map", { zoomControl: false, preferCanvas: true })
+               .setView([48.835, 10.1035], 16);
+  L.tileLayer("/tiles/{z}/{x}/{y}.png", {
+    maxZoom: 20,
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+  }).addTo(map);
 
-    const mapNote = document.getElementById("map-note");
-    const markerLayer = L.layerGroup().addTo(map);
-    let pathLayer = null;
-    let userAdjustedMap = false;
-    let latestId = null;
-    let lastMessages = [];
+  const markerLayer = L.layerGroup().addTo(map);
+  let pathLayer = null;
+  let userAdjustedMap = false;
+  let lastMessages = [];
+  let latestId = null;
+  let staleTimer = null;
 
-    map.on("zoomstart dragstart", () => {
-      userAdjustedMap = true;
-    });
+  map.on("zoomstart dragstart", () => { userAdjustedMap = true; });
 
-    function fmt(value, digits = 1, suffix = "") {
-      if (value === null || value === undefined) return "-";
-      return `${Number(value).toFixed(digits)}${suffix}`;
+  /* ── helpers ── */
+  function fmt(v, digits = 1, suffix = "") {
+    return (v === null || v === undefined) ? "-" : `${Number(v).toFixed(digits)}${suffix}`;
+  }
+
+  function compassPoint(deg) {
+    if (deg === null || deg === undefined) return "";
+    return ["N","NE","E","SE","S","SW","W","NW"][Math.round(deg / 45) % 8];
+  }
+
+  function latestMarkerHtml(heading) {
+    const rotate = (heading !== null && heading !== undefined) ? heading : 0;
+    return `<div style="width:38px;height:38px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.32))">
+      <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="-19 -19 38 38"
+           style="transform:rotate(${rotate}deg);display:block">
+        <circle r="16" fill="#0f766e" stroke="white" stroke-width="3"/>
+        <polygon points="0,-11 6,5 0,1 -6,5" fill="white"/>
+      </svg></div>`;
+  }
+
+  /* ── station cards ── */
+  function renderStations(stations) {
+    const list = document.getElementById("station-list");
+    const empty = document.getElementById("empty");
+    const dot = document.getElementById("dot");
+    const countEl = document.getElementById("station-count");
+
+    if (!stations.length) {
+      empty.style.display = "block";
+      list.innerHTML = "";
+      dot.className = "dot";
+      document.getElementById("status-text").textContent = "No messages yet";
+      document.getElementById("updated").textContent = "-";
+      countEl.textContent = "";
+      return;
     }
 
-    function setLatest(message) {
-      const hasMessage = Boolean(message);
-      document.getElementById("empty").style.display = hasMessage ? "none" : "block";
-      document.getElementById("dot").classList.toggle("live", hasMessage);
-      document.getElementById("status").textContent = hasMessage ? "Receiving CAM messages" : "No messages yet";
+    empty.style.display = "none";
+    countEl.textContent = `${stations.length} station${stations.length > 1 ? "s" : ""}`;
 
-      if (!hasMessage) return;
+    dot.className = "dot live";
+    const newest = stations[0].latest;
+    latestId = newest.id;
+    document.getElementById("status-text").textContent = "Receiving CAM messages";
+    document.getElementById("updated").textContent = new Date(newest.received_at).toLocaleTimeString();
 
-      latestId = message.id;
-      document.getElementById("delta").textContent = message.generation_delta_time;
-      document.getElementById("speed").textContent = fmt(message.speed_kmh, 1, " km/h");
-      document.getElementById("heading").textContent = fmt(message.heading_deg, 1, " deg");
-      document.getElementById("station").textContent = message.station_type ?? "-";
-      document.getElementById("updated").textContent = new Date(message.received_at).toLocaleString();
+    clearTimeout(staleTimer);
+    staleTimer = setTimeout(() => {
+      dot.className = "dot stale";
+      document.getElementById("status-text").textContent = "No new messages (stale)";
+    }, 5000);
+
+    list.innerHTML = "";
+    for (const s of stations) {
+      const m = s.latest;
+      const pos = (m.latitude !== null && m.longitude !== null)
+        ? `${m.latitude.toFixed(5)}, ${m.longitude.toFixed(5)}`
+        : "No GPS";
+
+      const card = document.createElement("a");
+      card.href = `/station/${s.station_key}/`;
+      card.className = "station-card";
+      card.innerHTML = `
+        <div class="station-card-header">
+          <span class="station-name">${s.station_type_label}</span>
+          <span class="station-id-tag">${s.station_id !== null ? "ID " + s.station_id : "ID unknown"}</span>
+          <span class="station-badge">${s.message_count} msg</span>
+        </div>
+        <div class="station-metrics">
+          <div class="sm-item">
+            <div class="sm-label">Speed</div>
+            <div class="sm-value">${fmt(m.speed_kmh, 1, " km/h")}</div>
+          </div>
+          <div class="sm-item">
+            <div class="sm-label">Heading</div>
+            <div class="sm-value">${m.heading_deg !== null ? fmt(m.heading_deg, 1, "°") + " " + compassPoint(m.heading_deg) : "-"}</div>
+          </div>
+          <div class="sm-item">
+            <div class="sm-label">Altitude</div>
+            <div class="sm-value">${fmt(m.altitude_m, 1, " m")}</div>
+          </div>
+        </div>
+        <div class="station-footer">
+          <span>${pos}</span>
+          <span class="arrow-link">View history &rsaquo;</span>
+        </div>
+      `;
+      list.appendChild(card);
+    }
+  }
+
+  /* ── map rendering (uses all messages) ── */
+  function mapPoints(messages) {
+    return messages
+      .filter(m => m.latitude !== null && m.longitude !== null)
+      .map(m => ({ ...m, ll: [m.latitude, m.longitude] }));
+  }
+
+  function renderMap(messages) {
+    lastMessages = messages;
+    const pts = mapPoints(messages);
+    markerLayer.clearLayers();
+    if (pathLayer) { map.removeLayer(pathLayer); pathLayer = null; }
+
+    const note = document.getElementById("map-note");
+    if (!pts.length) {
+      note.textContent = "Waiting for messages with valid coordinates.";
+      return;
     }
 
-    function renderRows(messages) {
-      const body = document.getElementById("messages");
-      body.innerHTML = "";
-
-      for (const message of messages) {
-        const row = document.createElement("tr");
-        if (message.id === latestId) {
-          row.classList.add("latest-row");
-        }
-        const position = message.latitude === null || message.longitude === null
-          ? "-"
-          : `${message.latitude.toFixed(7)}, ${message.longitude.toFixed(7)}`;
-
-        row.innerHTML = `
-          <td><span class="badge ${message.id === latestId ? "latest" : ""}">${message.id}</span>${new Date(message.received_at).toLocaleTimeString()}</td>
-          <td>${position}</td>
-          <td>${fmt(message.speed_kmh, 1, " km/h")}</td>
-        `;
-        body.appendChild(row);
-      }
+    const chrono = pts.slice().reverse();
+    if (chrono.length > 1) {
+      pathLayer = L.polyline(chrono.map(p => p.ll), { className: "cam-path" }).addTo(map);
     }
 
-    function mapPoints(messages) {
-      return messages
-        .filter(message => message.latitude !== null && message.longitude !== null)
-        .map(message => ({ ...message, latLng: [message.latitude, message.longitude] }));
+    for (const p of chrono) {
+      const isLatest = p.id === latestId;
+      const icon = isLatest
+        ? L.divIcon({ html: latestMarkerHtml(p.heading_deg), className: "", iconSize: [38,38], iconAnchor: [19,19] })
+        : L.divIcon({ html: `<div class="cam-marker">${p.id}</div>`, className: "", iconSize: [22,22], iconAnchor: [11,11] });
+
+      L.marker(p.ll, { icon, zIndexOffset: isLatest ? 1000 : 0 })
+       .bindPopup(`
+         <strong>${isLatest ? "Latest" : "CAM #" + p.id}</strong><br>
+         ${p.station_type_label}<br>
+         ${p.latitude.toFixed(7)}, ${p.longitude.toFixed(7)}<br>
+         Speed: ${fmt(p.speed_kmh, 1, " km/h")}<br>
+         Heading: ${p.heading_deg !== null ? fmt(p.heading_deg, 1, "°") + " " + compassPoint(p.heading_deg) : "—"}<br>
+         ${new Date(p.received_at).toLocaleTimeString()}
+       `)
+       .addTo(markerLayer);
     }
 
-    function zoom(factor) {
-      userAdjustedMap = true;
-      if (factor < 1) {
-        map.zoomIn();
-      } else {
-        map.zoomOut();
-      }
+    const latest = pts.find(p => p.id === latestId) || pts[0];
+    note.textContent = `${pts.length} position${pts.length !== 1 ? "s" : ""} · ${latest.latitude.toFixed(6)}, ${latest.longitude.toFixed(6)} · ${fmt(latest.speed_kmh, 1, " km/h")}`;
+
+    if (!userAdjustedMap) {
+      const bounds = L.latLngBounds(pts.map(p => p.ll));
+      if (bounds.isValid()) map.fitBounds(bounds.pad(0.18), { maxZoom: 18 });
     }
+  }
 
-    function fitMap() {
-      userAdjustedMap = false;
-      renderMap(lastMessages);
-    }
+  /* ── polling ── */
+  async function refresh() {
+    try {
+      const [sData, mData] = await Promise.all([
+        fetch("/api/stations/").then(r => r.json()),
+        fetch("/api/messages/?limit=100").then(r => r.json()),
+      ]);
+      renderStations(sData.stations || []);
+      renderMap(mData.messages || []);
+    } catch (_) {}
+  }
 
-    function renderMap(messages) {
-      lastMessages = messages;
-      const points = mapPoints(messages);
-      markerLayer.clearLayers();
-      if (pathLayer) {
-        map.removeLayer(pathLayer);
-        pathLayer = null;
-      }
+  refresh();
+  setInterval(refresh, 1000);
 
-      if (!points.length) {
-        mapNote.textContent = "Waiting for messages with valid latitude and longitude.";
-        return;
-      }
-
-      const chronological = points.slice().reverse();
-      if (chronological.length > 1) {
-        pathLayer = L.polyline(
-          chronological.map(point => point.latLng),
-          { className: "cam-path" }
-        ).addTo(map);
-      }
-
-      for (const point of chronological) {
-        const isLatest = point.id === latestId;
-        const html = `<div class="cam-marker ${isLatest ? "latest" : ""}">${isLatest ? "N" : point.id}</div>`;
-        const icon = L.divIcon({
-          html,
-          className: "",
-          iconSize: isLatest ? [34, 34] : [24, 24],
-          iconAnchor: isLatest ? [17, 17] : [12, 12]
-        });
-        L.marker(point.latLng, { icon, zIndexOffset: isLatest ? 1000 : 0 })
-          .bindPopup(`
-            <strong>${isLatest ? "Latest" : "CAM #" + point.id}</strong><br>
-            ${point.latitude.toFixed(7)}, ${point.longitude.toFixed(7)}<br>
-            ${fmt(point.speed_kmh, 1, " km/h")}<br>
-            Delta: ${point.generation_delta_time}
-          `)
-          .addTo(markerLayer);
-      }
-
-      const latest = points.find(point => point.id === latestId) || points[0];
-      mapNote.textContent = `${points.length} coordinates shown. Latest: ${latest.latitude.toFixed(7)}, ${latest.longitude.toFixed(7)} | ${fmt(latest.speed_kmh, 1, " km/h")}`;
-
-      if (!userAdjustedMap) {
-        const bounds = L.latLngBounds(points.map(point => point.latLng));
-        if (bounds.isValid()) {
-          map.fitBounds(bounds.pad(0.18), { maxZoom: 18 });
-        }
-      }
-    }
-
-    async function refresh() {
-      const response = await fetch("/api/messages/?limit=100");
-      const data = await response.json();
-      const messages = data.messages || [];
-
-      setLatest(messages[0]);
-      renderRows(messages);
-      renderMap(messages);
-    }
-
-    refresh();
-    setInterval(refresh, 1000);
-    document.getElementById("zoom-in").addEventListener("click", () => zoom(0.6));
-    document.getElementById("zoom-out").addEventListener("click", () => zoom(1.7));
-    document.getElementById("fit").addEventListener("click", fitMap);
-    window.addEventListener("resize", () => {
-      map.invalidateSize();
-      renderMap(lastMessages);
-    });
-  </script>
+  document.getElementById("zoom-in") .addEventListener("click", () => { userAdjustedMap = true; map.zoomIn(); });
+  document.getElementById("zoom-out").addEventListener("click", () => { userAdjustedMap = true; map.zoomOut(); });
+  document.getElementById("fit")     .addEventListener("click", () => { userAdjustedMap = false; renderMap(lastMessages); });
+  window.addEventListener("resize", () => { map.invalidateSize(); renderMap(lastMessages); });
+</script>
 </body>
 </html>

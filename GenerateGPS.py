@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 from pathlib import Path
+import time
 
 import pynmea2
 import serial
 
 
-SERIAL_PORT = "/dev/serial0"
-BAUD_RATE = 9600
+SERIAL_PORT = "/dev/ttyUSB1"
+BAUD_RATE = 115200
 NMEA_FILE = Path(__file__).with_name("output.nmea")
 
 ITS_EPOCH = datetime(2004, 1, 1, tzinfo=timezone.utc)
@@ -163,10 +164,10 @@ def _locations_from_lines(lines):
         except pynmea2.ParseError:
             continue
 
-        if msg.sentence_type == "GGA" and getattr(msg, "gps_qual", "0") != "0":
+        if type(msg).__name__ == "GGA" and getattr(msg, "gps_qual", "0") != "0":
             latest_gga = msg
 
-        elif msg.sentence_type == "RMC" and getattr(msg, "status", "") == "A":
+        elif type(msg).__name__ == "RMC" and getattr(msg, "status", "") == "A":
             yield _cam_from_fix(msg, latest_gga)
 
 
@@ -176,6 +177,81 @@ def GetGPS():
             gps.readline().decode("ascii", errors="replace") for _ in iter(int, 1)
         ):
             return location
+
+
+def stream_gps():
+    """Generator that yields GPS fixes continuously, keeping the serial port open.
+
+    Yields a fix dict each time a valid RMC+fix sentence arrives.
+    Yields None on each 1-second read timeout (no data) so the caller can log
+    'waiting' messages without being blocked. Automatically reconnects if the
+    port disappears (e.g. USB re-enumeration on reboot).
+    """
+    got_first_fix = False
+    while True:
+        try:
+            with serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=1) as ser:
+                latest_gga = None
+                while True:
+                    raw = ser.readline()
+                    if not raw:
+                        # readline timed out — nothing arriving on the port
+                        if not got_first_fix:
+                            print(f"[GPS] readline timeout — no data on {SERIAL_PORT} "
+                                  f"(baud={BAUD_RATE})", flush=True)
+                        yield None
+                        continue
+
+                    line = raw.decode("ascii", errors="replace").strip()
+                    if not line:
+                        continue
+
+                    # Log every raw sentence until the first fix so we can see
+                    # exactly what the module is sending (status A/V, sentence
+                    # types, etc.)
+                    if not got_first_fix:
+                        print(f"[GPS RAW] {line}", flush=True)
+
+                    try:
+                        msg = pynmea2.parse(line)
+                    except pynmea2.ParseError as exc:
+                        if not got_first_fix:
+                            print(f"[GPS] parse error: {exc}", flush=True)
+                        continue
+
+                    if type(msg).__name__ == "GGA" and getattr(msg, "gps_qual", "0") != "0":
+                        latest_gga = msg
+                    elif type(msg).__name__ == "RMC" and getattr(msg, "status", "") == "A":
+                        if not got_first_fix:
+                            print("[GPS] First valid fix obtained.", flush=True)
+                            got_first_fix = True
+                        yield _cam_from_fix(msg, latest_gga)
+
+        except serial.SerialException as exc:
+            print(f"[GPS] Serial error on {SERIAL_PORT}: {exc}. Retrying in 5 s …", flush=True)
+            time.sleep(5)
+
+
+def wait_for_uart(timeout_s=60):
+    """Block until the GPS UART is outputting NMEA sentences, or timeout_s elapses.
+
+    Returns True when NMEA is detected, False on timeout. Call this after
+    activating the GPS module to avoid reading the port before it is ready.
+    """
+    print(f"[GPS] Waiting for NMEA output on {SERIAL_PORT} (up to {timeout_s} s) …", flush=True)
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        try:
+            with serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=2) as ser:
+                raw = ser.readline()
+                if raw and raw.decode("ascii", errors="replace").strip().startswith("$"):
+                    print(f"[GPS] UART ready — receiving NMEA.", flush=True)
+                    return True
+        except serial.SerialException:
+            pass
+        time.sleep(1)
+    print(f"[GPS] Warning: no NMEA on {SERIAL_PORT} after {timeout_s} s. Continuing anyway.", flush=True)
+    return False
 
 
 def MockGPS():
@@ -196,3 +272,4 @@ def MockGPS():
 
 if __name__ == "__main__":
     print(MockGPS())
+

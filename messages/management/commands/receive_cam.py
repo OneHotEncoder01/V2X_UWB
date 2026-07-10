@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 import asn1tools
+import os
 import serial
 from serial.tools import list_ports
 
@@ -11,7 +12,8 @@ class Command(BaseCommand):
     help = "Read CAM frames from a UWB RX board serial port and store them for the dashboard."
 
     def add_arguments(self, parser):
-        parser.add_argument("--port", default="/dev/ttyUSB0", help="RX board serial port")
+        default_port = "COM3" if os.name == "nt" else "/dev/ttyUSB0"
+        parser.add_argument("--port", default=default_port, help="RX board serial port")
         parser.add_argument("--baud", type=int, default=115200, help="RX board baud rate")
         parser.add_argument(
             "--encoding",
@@ -52,17 +54,18 @@ class Command(BaseCommand):
                     self.stdout.write(f"RAW: {line!r}")
 
                 try:
-                    payload, decoded, payload_encoding, asn_type = decode_serial_line(
+                    payload, decoded, payload_encoding, asn_type, station_id = decode_serial_line(
                         template,
                         line,
                         options["encoding"],
                     )
-                    fields = flatten_cam(decoded)
+                    fields = flatten_cam(decoded, station_id)
                 except (ValueError, UnicodeDecodeError, asn1tools.DecodeError) as exc:
                     self.stderr.write(f"Invalid CAM frame: {exc} ({line!r})")
                     continue
 
                 message = CamMessage.objects.create(
+                    station_id=fields["station_id"],
                     generation_delta_time=fields["generation_delta_time"],
                     station_type=fields["station_type"],
                     latitude=fields["latitude"],

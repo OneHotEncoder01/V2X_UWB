@@ -1,0 +1,50 @@
+# CAM Transmitter — systemd service for the Raspberry Pi
+#
+# Quick install (run from the project directory on the Pi):
+#   bash install_service.sh
+#
+# Manual install:
+#   1. Edit WorkingDirectory and ExecStart below to match your paths.
+#   2. sudo cp cam_transmitter.service /etc/systemd/system/
+#   3. sudo systemctl daemon-reload
+#   4. sudo systemctl enable --now cam_transmitter
+#
+# Useful commands:
+#   journalctl -u cam_transmitter -f      # follow live logs
+#   sudo systemctl status cam_transmitter # service status
+#   sudo systemctl restart cam_transmitter
+
+[Unit]
+Description=V2X CAM Transmitter
+# Wait for all three USB serial devices before starting:
+#   ttyUSB1 — GPS HAT NMEA output
+#   ttyUSB2 — GPS HAT AT command port
+#   ttyUSB4 — TX ESP32 UWB board
+After=dev-ttyUSB1.device dev-ttyUSB2.device dev-ttyUSB4.device
+Wants=dev-ttyUSB1.device dev-ttyUSB2.device dev-ttyUSB4.device
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/V2X_UWB
+ExecStart=/home/pi/V2X_UWB/venv/bin/python /home/pi/V2X_UWB/MainTx.py
+
+# If the script exits for any reason (crash, GPS error), restart after 10 s.
+Restart=on-failure
+RestartSec=10
+
+# Use SIGINT so Python's KeyboardInterrupt handler runs and workers shut down
+# cleanly. Give the process 15 s to finish before SIGKILL.
+KillSignal=SIGINT
+TimeoutStopSec=15
+
+# Send stdout/stderr to the systemd journal (readable with journalctl).
+StandardOutput=journal
+StandardError=journal
+
+# Run as the pi user so serial port group permissions (dialout) apply.
+User=pi
+Group=dialout
+
+[Install]
+WantedBy=multi-user.target
+
