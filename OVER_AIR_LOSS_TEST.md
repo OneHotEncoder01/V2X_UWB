@@ -50,6 +50,30 @@ rate and settled at about `45.45 Hz`, matching the earlier serial/TX-side
 throughput ceiling. That is a throughput saturation limit before packet loss,
 not a UWB packet-loss limit.
 
+## Preliminary Indoor Range Observation
+
+Manual indoor checks with a measuring tape showed that reception was lost at
+approximately `10 m`, while the link recovered again around `6 m`. This should
+be treated as a preliminary setup-specific observation until it is repeated with
+the sequenced packet-loss logger.
+
+Suggested confirmation sweep around the threshold:
+
+```csv
+phase,distance_m,condition,rate_hz,packets,setup_delay_s,notes
+1,10,LOS,10,1000,45,indoor threshold check
+2,9,LOS,10,1000,45,indoor threshold check
+3,8,LOS,10,1000,45,indoor threshold check
+4,7,LOS,10,1000,45,indoor threshold check
+5,6,LOS,10,1000,45,indoor recovered link
+```
+
+Paper wording should avoid claiming a universal UWB range. A safer phrasing is:
+
+> In the tested indoor environment and board orientation, packet reception was
+> lost at approximately 10 m and recovered around 6 m, suggesting an effective
+> reliable indoor operating range below 10 m for this setup.
+
 The runner:
 
 1. Opens an SSH control connection to the Pi.
