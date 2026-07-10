@@ -1,6 +1,6 @@
 phase,distance_m,condition,rate_hz,packets,setup_delay_s,notes
-1,1,LOS,10,1000,30,indoor baseline
-2,2,LOS,10,1000,30,indoor LOS
+1,7,LOS,10,1000,45,indoor max tape
+2,5,LOS,10,1000,45,indoor LOS
 3,3,LOS,10,1000,30,indoor LOS
-4,5,LOS,10,1000,45,indoor LOS
-5,7,LOS,10,1000,45,indoor max tape
+4,2,LOS,10,1000,30,indoor LOS
+5,1,LOS,10,1000,30,indoor baseline

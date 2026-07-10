@@ -189,14 +189,15 @@ Indoor tape-measure starter plan:
 
 ```csv
 phase,distance_m,condition,rate_hz,packets,setup_delay_s,notes
-1,1,LOS,10,1000,30,indoor baseline
-2,2,LOS,10,1000,30,indoor LOS
+1,7,LOS,10,1000,45,indoor max tape
+2,5,LOS,10,1000,45,indoor LOS
 3,3,LOS,10,1000,30,indoor LOS
-4,5,LOS,10,1000,45,indoor LOS
-5,7,LOS,10,1000,45,indoor max tape
+4,2,LOS,10,1000,30,indoor LOS
+5,1,LOS,10,1000,30,indoor baseline
 ```
 
-If every LOS point is still `0%` loss, add NLOS phases at the same measured
+This is ordered max-first. If the `7 m` LOS point is already `0%` loss, you can
+stop early and spend the time on NLOS instead. If every LOS point is still `0%` loss, add NLOS phases at the same measured
 distances: one wall between boards, door open/closed, or a body/vehicle blocking
 line of sight. Those conditions are more likely to reveal useful loss behavior
 than simply repeating short-range LOS for longer.
