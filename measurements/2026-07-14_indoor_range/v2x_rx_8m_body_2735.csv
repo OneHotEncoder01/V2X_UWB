@@ -1,0 +1,6 @@
+received_at,elapsed_s,event,test_id,seq,station_id,generation_delta_time,payload_bytes,payload_encoding,asn_type,raw_hex,line,error
+2026-07-14T15:43:36.912856+00:00,81.445146,rx_error,,,,,,,,,RX ERROR: 0x1810F07,
+2026-07-14T15:43:51.718963+00:00,96.251255,rx_error,,,,,,,,,RX ERROR: 0x1810F07,
+2026-07-14T15:43:51.912979+00:00,96.445270,rx_error,,,,,,,,,RX ERROR: 0x1810F07,
+2026-07-14T15:43:56.015463+00:00,100.547762,rx_error,,,,,,,,,RX ERROR: 0x1810F07,
+2026-07-14T15:43:56.117392+00:00,100.649693,rx_error,,,,,,,,,RX ERROR: 0x1810F07,

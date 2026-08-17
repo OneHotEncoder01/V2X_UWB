@@ -258,8 +258,37 @@ def MockGPS():
     global _mock_locations, _mock_index
 
     if _mock_locations is None:
-        with NMEA_FILE.open("r", encoding="utf-8") as file:
-            _mock_locations = list(_locations_from_lines(file))
+        if NMEA_FILE.exists():
+            with NMEA_FILE.open("r", encoding="utf-8") as file:
+                _mock_locations = list(_locations_from_lines(file))
+        else:
+            # Keep hardware tests independent of both satellite reception and
+            # an optional recorded NMEA file.  The CAM timestamp is supplied by
+            # the caller; these fixed values only populate the vehicle state.
+            _mock_locations = [
+                {
+                    "timestampIts": 0,
+                    "latitude": 488_350_000,
+                    "longitude": 101_035_000,
+                    "heading": {
+                        "headingValue": 0,
+                        "headingConfidence": 127,
+                    },
+                    "speed": {
+                        "speedValue": 0,
+                        "speedConfidence": 127,
+                    },
+                    "positionConfidenceEllipse": {
+                        "semiMajorConfidence": POSITION_CONFIDENCE_UNAVAILABLE,
+                        "semiMinorConfidence": POSITION_CONFIDENCE_UNAVAILABLE,
+                        "semiMajorOrientation": HEADING_UNAVAILABLE,
+                    },
+                    "altitude": {
+                        "altitudeValue": 45_000,
+                        "altitudeConfidence": "unavailable",
+                    },
+                }
+            ]
 
     if not _mock_locations:
         raise ValueError(f"No valid GPS locations found in {NMEA_FILE}")
@@ -272,4 +301,3 @@ def MockGPS():
 
 if __name__ == "__main__":
     print(MockGPS())
-
