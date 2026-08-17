@@ -436,8 +436,8 @@ roughly every 2–3s, confirming this wasn't a stresstest artifact: production i
 was silently running at ~0.4 Hz for as long as the stale file was deployed.
 
 This repo's tracked `GenerateCAM.py` already had the caching fix from an earlier
-refactor — it had simply never been redeployed to the Pi (the Pi's copy at
-`/home/sinan/CAM_Broadcaster` has generally diverged from this repo; see
+refactor — it had simply never been redeployed to the Pi (the Pi's deployed copy
+had generally diverged from this repo; see
 [Service and Process Management](#service-and-process-management)).
 
 **Fix:** back up the stale deployed file, redeploy the repo's already-correct

@@ -68,7 +68,7 @@ phase,distance_m,condition,rate_hz,packets,setup_delay_s,notes
 5,6,LOS,10,1000,45,indoor recovered link
 ```
 
-Paper wording should avoid claiming a universal UWB range. A safer phrasing is:
+When writing up results, avoid claiming a universal UWB range. A safer phrasing is:
 
 > In the tested indoor environment and board orientation, packet reception was
 > lost at approximately 10 m and recovered around 6 m, suggesting an effective
@@ -145,7 +145,7 @@ venv/bin/python over_air_loss_rx.py \
 Manual Pi TX only:
 
 ```bash
-ssh pi 'cd /home/sinan/CAM_Broadcaster && ./bin/python over_air_loss_tx.py \
+ssh pi 'cd ~/V2X_UWB && ./bin/python over_air_loss_tx.py \
   --test-id 1001 \
   --rates 10,20,30,40,45,50,60 \
   --packets-per-rate 5000 \
@@ -159,7 +159,7 @@ field transmitter. On the Pi itself, or over SSH while it is still reachable,
 run:
 
 ```bash
-cd /home/sinan/CAM_Broadcaster
+cd ~/V2X_UWB
 ./bin/python field_distance_tx.py \
   --plan field_distance_plan.csv \
   --test-id 1201 \
@@ -187,7 +187,7 @@ After the field run, return to Wi-Fi or plug the Pi back in, fetch the TX CSV,
 and analyze by distance:
 
 ```bash
-scp pi:/home/sinan/CAM_Broadcaster/field_distance_tx_1201.csv .
+scp pi:~/V2X_UWB/field_distance_tx_1201.csv .
 
 venv/bin/python analyze_field_distance_loss.py \
   field_distance_tx_1201.csv \
@@ -197,7 +197,7 @@ venv/bin/python analyze_field_distance_loss.py \
 ```
 
 The included starter plan uses `1000` packets at `10 Hz` per distance because
-that already takes about 100 seconds per point. For the final paper run, change
+that already takes about 100 seconds per point. For a final measurement run, change
 `packets` to `5000` for the most important distances, or keep `1000` for a
 wide scouting sweep and repeat only the edge cases where loss starts to appear.
 
@@ -206,7 +206,7 @@ Recommended field strategy:
 | Pass | Distances | Packets | Purpose |
 |---|---|---:|---|
 | Scout | 1, 5, 10, 20, 30, 40, 50 m LOS + one NLOS point | 1000 | Find where loss begins without spending too long |
-| Final LOS | Near the loss threshold and one short-range baseline | 5000 | Strong paper-quality PDR numbers |
+| Final LOS | Near the loss threshold and one short-range baseline | 5000 | Strong publication-quality PDR numbers |
 | Final NLOS | Wall/vehicle/body-blocked cases | 1000-5000 | Show realistic obstruction behavior |
 
 Indoor tape-measure starter plan:

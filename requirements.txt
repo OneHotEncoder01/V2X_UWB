@@ -1,4 +1,14 @@
-asn1tools
-django
-pynmea2
-pyserial
+# Core runtime — needed by MainTx.py, MainRx.py and the Django dashboard
+asn1tools          # ASN.1 UPER encoder/decoder for CAM messages
+django             # RX dashboard and message storage
+pynmea2            # NMEA sentence parsing from the GPS HAT
+pyserial           # Serial I/O to the GPS HAT and both ESP32 boards
+
+# Analysis and figures — needed by figures/*.py, plot_stress_results.py,
+# analyze_over_air_loss.py and analyze_field_distance_loss.py
+matplotlib
+numpy
+scipy
+
+# Tested with: asn1tools 0.167.0, Django 6.0.6, pynmea2 1.19.0, pyserial 3.5,
+# matplotlib 3.11.0, numpy 2.5.0, scipy 1.18.0 on Python 3.14.

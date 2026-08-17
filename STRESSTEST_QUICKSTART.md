@@ -14,7 +14,7 @@
 - [ ] Raspberry Pi powered on, GPS HAT connected, serial ready
 - [ ] ESP32 TX board connected to Pi via USB at `/dev/ttyUSB4`
 - [ ] Laptop with RX ready (optional, for monitoring only)
-- [ ] Terminal window open in `/home/onehotencoder/Documents/V2X_UWB/`
+- [ ] Terminal window open in the project root on the Pi
 - [ ] **~30 min of uninterrupted time**
 
 ---
@@ -72,7 +72,7 @@ This creates:
 
 ---
 
-## Key Metrics to Report in Thesis
+## Key Metrics Worth Reporting
 
 1. **Saturation point:** e.g., "System reliably handles up to 40 Hz with 100% success rate; saturates at 50 Hz (85% success)"
 2. **Latency:** e.g., "TX latency remains 4–12 ms across all rates, well below ETSI 50 ms requirement"
@@ -84,7 +84,7 @@ This creates:
 
 | Problem | Solution |
 |---|---|
-| `ModuleNotFoundError: No module named 'GenerateCAM'` | Ensure you're in `/home/onehotencoder/Documents/V2X_UWB/` directory |
+| `ModuleNotFoundError: No module named 'GenerateCAM'` | Ensure you're in the project root directory |
 | GPS fix not arriving | Check GPS HAT power, antenna, clear sky view; try `python GenerateGPS.py` standalone |
 | Serial port error on TX board | Check `/dev/ttyUSB4` exists; verify Arduino sketch uploaded; try `ls -la /dev/ttyUSB*` |
 | Low success rate from start | ESP32 may need reset; try power-cycling the UWB board |
@@ -98,4 +98,4 @@ This creates:
 - Each CAM gets a **fresh ETSI timestamp** for authenticity
 - Serial port remains open during entire sweep
 - Test is **stationary** (no movement)
-- CSV output is suitable for thesis figures
+- CSV output feeds directly into `plot_stress_results.py`

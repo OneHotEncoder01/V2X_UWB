@@ -1,7 +1,9 @@
 """
-Erzeugt Abbildungen für die Projektarbeit aus der Datenbank cam_messages.sqlite3.
-Ausführen vom Projektverzeichnis:  venv/bin/python figures/generate_figures.py
-Ausgabe: figures/*.pdf (Vektor, direkt in LaTeX verwendbar) + figures/*.png (Vorschau)
+Generates figures from the received-message database cam_messages.sqlite3.
+Run from the project root:  venv/bin/python figures/generate_figures.py
+Output: figures/*.pdf (vector, ready for LaTeX) + figures/*.png (preview)
+
+Note: comments and figure labels in this script are in German.
 """
 
 import sqlite3

@@ -227,7 +227,12 @@ def main():
     parser = argparse.ArgumentParser(description="Run an automated over-the-air loss test")
     parser.add_argument("--pi-host", default="pi")
     parser.add_argument("--ssh-config", default=str(Path.home() / ".ssh" / "config"))
-    parser.add_argument("--remote-dir", default="/home/sinan/CAM_Broadcaster")
+    parser.add_argument(
+        "--remote-dir",
+        default="V2X_UWB",
+        help="Project directory on the Pi. Relative paths resolve against the "
+        "SSH login home directory (default: %(default)s).",
+    )
     parser.add_argument("--remote-python", default="./bin/python")
     parser.add_argument("--local-python", default=default_local_python())
     parser.add_argument("--rx-port", default=serial_ports.rx_port())
